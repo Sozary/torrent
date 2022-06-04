@@ -1,28 +1,47 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue.js App" />
+    <div class="flex gap-5 p-4">
+      <a @click="show = 'magnet'">
+        <div
+          :class="{
+            'bg-gray-600 cursor-default hover:bg-gray-600': show === 'magnet',
+          }"
+          class="p-2 bg-gray-300 rounded cursor-pointer hover:bg-gray-200 active:bg-gray-600 transition-all"
+        >
+          Add a magnet
+        </div>
+      </a>
+      <a @click="show = 'torrent'"
+        ><div
+          :class="{
+            'bg-gray-600  cursor-default hover:bg-gray-600': show === 'torrent',
+          }"
+          class="p-2 bg-gray-300 rounded cursor-pointer hover:bg-gray-200 active:bg-gray-600 transition-all"
+        >
+          List of torrents
+        </div></a
+      >
+    </div>
+    <div class="p-4">
+      <magnet-tab v-if="show === 'magnet'" />
+      <torrent-tab v-if="show === 'torrent'" />
+    </div>
   </div>
 </template>
 
 <script>
-import HelloWorld from "./components/HelloWorld.vue";
-
+import MagnetTab from "@/components/MagnetTab.vue";
+import TorrentTab from "@/components/TorrentTab.vue";
 export default {
   name: "App",
   components: {
-    HelloWorld,
+    MagnetTab,
+    TorrentTab,
+  },
+  data() {
+    return {
+      show: "magnet",
+    };
   },
 };
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
