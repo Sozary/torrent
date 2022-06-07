@@ -1,0 +1,5 @@
+{
+  "InfraStack": {
+    "WebsocketUrl": "wss://3nn1doqao5.execute-api.eu-central-1.amazonaws.com/dev"
+  }
+}
