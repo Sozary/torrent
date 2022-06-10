@@ -31,7 +31,15 @@ export default {
       if (apiUrl) {
         const socket = new WebSocket(apiUrl);
         socket.addEventListener("open", () => {
-          const payload = { action: "message", msg: "Test" };
+          const payload = {
+            action: "message",
+            data: {
+              type: "login",
+              payload: {
+                auth: "test",
+              },
+            },
+          };
           socket.send(JSON.stringify(payload));
         });
         socket.addEventListener("message", (event) => {
