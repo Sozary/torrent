@@ -4,7 +4,6 @@ import {
   CfnOutput,
   aws_apigateway as apigateway,
 } from "aws-cdk-lib";
-import * as secretsmanager from "@aws-cdk/aws-secretsmanager";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import { Construct } from "constructs";
 import * as path from "path";
@@ -14,6 +13,7 @@ import { WebSocketLambdaIntegration } from "@aws-cdk/aws-apigatewayv2-integratio
 import * as apigwv2 from "@aws-cdk/aws-apigatewayv2-alpha";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as rds from "aws-cdk-lib/aws-rds";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 
 export class InfraStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -86,6 +86,12 @@ export class InfraStack extends Stack {
       integration: new WebSocketLambdaIntegration("Message", fn),
     });
 
+    new CfnOutput(this, "WebsocketUrl", {
+      value: stage.url,
+      description: "Url of the websocket API",
+      exportName: "websocket-url",
+    });
+
     fn.addEnvironment("WEBSOCKET_API_URL", stage.url);
     // ===========================
 
@@ -114,15 +120,22 @@ export class InfraStack extends Stack {
       databaseName: "torrent",
       publiclyAccessible: false,
     });
-    dbInstance.connections.allowFrom(fn, ec2.Port.tcp(5432));
-    new CfnOutput(this, "Credentials", {
-      value: JSON.stringify(credentials),
-      description: "Url of the websocket API",
-      exportName: "websocket-url",
-    });
 
-    fn.addEnvironment("DATABASE_HOST", dbInstance.dbInstanceEndpointAddress);
-    fn.addEnvironment("DATABASE_PORT", dbInstance.dbInstanceEndpointPort);
+    dbInstance.connections.allowFrom(fn, ec2.Port.tcp(5432));
+    // arn:aws:secretsmanager:eu-central-1:763277165133:secret:InfraStackdbinstanceSecret1-AcZf8QW0ebJG-cPMiLh
+    let secret;
+    if (dbInstance?.secret?.secretName) {
+      secret = secretsmanager.Secret.fromSecretNameV2(
+        this,
+        "SecretFromName",
+        dbInstance.secret.secretName
+      );
+      secret.grantRead(fn);
+    }
+
+    if (dbInstance.secret) {
+      fn.addEnvironment("SECRET_NAME", dbInstance.secret.secretName);
+    }
     // ===========================
   }
 }

@@ -26,6 +26,7 @@
     "@aws-cdk/aws-apigatewayv2-alpha": "^2.27.0-alpha.0",
     "@aws-cdk/aws-apigatewayv2-integrations": "^1.159.0",
     "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.27.0-alpha.0",
+    "@aws-cdk/aws-secretsmanager": "^1.159.0",
     "aws-cdk-lib": "2.26.0",
     "aws-lambda": "^1.0.7",
     "aws-sdk": "^2.1149.0",

@@ -27,6 +27,7 @@ export default {
   },
   methods: {
     addTorrent() {
+      console.log("fe");
       const apiUrl = cdk?.InfraStack?.WebsocketUrl;
       if (apiUrl) {
         const socket = new WebSocket(apiUrl);

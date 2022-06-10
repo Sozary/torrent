@@ -1,13 +1,21 @@
 import { APIGatewayProxyEventV2 } from "aws-lambda";
 import * as AWS from "aws-sdk";
 
+let apiEndpoint;
+
+if (process.env.WEBSOCKET_API_URL) {
+  apiEndpoint = process.env.WEBSOCKET_API_URL.includes("wss://")
+    ? process.env.WEBSOCKET_API_URL.split("wss://")[1]
+    : process.env.WEBSOCKET_API_URL;
+}
+
 const api = new AWS.ApiGatewayManagementApi({
-  endpoint: process.env.WEBSOCKET_API_URL,
+  endpoint: apiEndpoint,
 });
 
 interface Payload {
   auth?: string;
-  message?: string;
+  message?: any;
 }
 
 interface Data {
@@ -15,6 +23,13 @@ interface Data {
   payload: Payload;
 }
 
+interface DBCredentials {
+  username: string;
+  password: string;
+  port: number;
+  dbname: string;
+  host: string;
+}
 function logUser(auth: string): boolean {
   return true;
 }
@@ -25,6 +40,27 @@ async function sendData(connectionId: string, data: Data) {
       Data: Buffer.from(JSON.stringify(data)),
     })
     .promise();
+}
+
+async function getDBAccess(
+  secretName: string
+): Promise<DBCredentials | boolean> {
+  let secretsManager = new AWS.SecretsManager();
+  const res = (await secretsManager
+    .getSecretValue({ SecretId: secretName })
+    .promise()) as AWS.SecretsManager.GetSecretValueResponse;
+  if (res && res.SecretString) {
+    const payload = JSON.parse(res.SecretString);
+
+    return {
+      username: payload.username,
+      password: payload.password,
+      port: payload.port,
+      dbname: payload.dbname,
+      host: payload.host,
+    } as DBCredentials;
+  }
+  return false;
 }
 
 exports.handle = async (event: APIGatewayProxyEventV2) => {
@@ -48,12 +84,17 @@ exports.handle = async (event: APIGatewayProxyEventV2) => {
               if (data.payload.auth) {
                 const response = logUser(data.payload.auth);
                 if (response) {
-                  await sendData(connectionId, {
-                    type: "loginSuccess",
-                    payload: {
-                      message: "Login successful",
-                    },
-                  });
+                  if (process.env.SECRET_NAME) {
+                    const rep = await getDBAccess(process.env.SECRET_NAME);
+                    if (rep) {
+                      await sendData(connectionId, {
+                        type: "loginSuccess",
+                        payload: {
+                          message: rep,
+                        },
+                      });
+                    }
+                  }
                 }
               }
               break;
